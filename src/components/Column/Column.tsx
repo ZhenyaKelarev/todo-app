@@ -1,57 +1,114 @@
-import { Column as ColumnType } from "@/types"
+import React, { useState } from "react"
 import { useTasks } from "@/hooks/useTasks"
 import { TaskCard } from "../Task/Task"
-import { useState } from "react"
+import { Column as ColumnType } from "@/types"
 
 interface Props {
   column: ColumnType
 }
 
 export function Column({ column }: Props) {
-  const [input, setInput] = useState("")
-  const addTask = useTasks((s) => s.addTask)
-  const tasks = useTasks((s) => s.tasks)
-  const removeColumn = useTasks((s) => s.removeColumn)
+  const {
+    tasks,
+    addTask,
+    selectAllInColumn,
+    bulkDelete,
+    bulkToggleComplete,
+    searchTerm,
+    statusFilter,
+  } = useTasks()
 
-  const handleAdd = () => {
-    if (input.trim() === "") return
-    addTask(column.id, input)
-    setInput("")
+  const [newTaskTitle, setNewTaskTitle] = useState("")
+
+  const taskList = column.taskIds
+    .map((id) => tasks[id])
+    .filter(Boolean)
+    .filter((task) =>
+      task.title.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter((task) => {
+      if (statusFilter === "all") return true
+      if (statusFilter === "completed") return task.completed
+      if (statusFilter === "incomplete") return !task.completed
+    })
+
+  const allSelected =
+    taskList.length > 0 && taskList.every((task) => task.selected)
+  const someSelected = taskList.some((task) => task.selected)
+
+  const handleAddTask = () => {
+    const title = newTaskTitle.trim()
+    if (title) {
+      addTask(column.id, title)
+      setNewTaskTitle("")
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleAddTask()
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md w-64 p-4 flex flex-col gap-2">
-      <div className="flex">
-        <div>
-          <h2 className="font-bold">{column.title}</h2>
-        </div>
-
-        <button
-          onClick={() => removeColumn(column.id)}
-          className="text-red-500"
-        >
-          ✕
-        </button>
+    <div className="min-w-[250px] border rounded p-4 bg-gray-100 flex flex-col gap-3">
+      {/* Заголовок + Select All */}
+      <div className="flex justify-between items-center">
+        <h2 className="font-bold text-lg">{column.title}</h2>
+        <label className="flex items-center gap-1 text-sm">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={(e) => selectAllInColumn(column.id, e.target.checked)}
+          />
+          Вибрати всі
+        </label>
       </div>
 
+      {/* Інпут додавання нового завдання */}
       <div className="flex gap-2">
         <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="border px-2 py-1 rounded w-full"
-          placeholder="New task"
+          type="text"
+          value={newTaskTitle}
+          onChange={(e) => setNewTaskTitle(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Нове завдання..."
+          className="flex-1 px-2 py-1 border rounded"
         />
         <button
-          onClick={handleAdd}
-          className="bg-blue-500 text-white px-2 py-1 rounded"
+          onClick={handleAddTask}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
         >
-          +
+          ➕
         </button>
       </div>
 
-      <div className="mt-2 flex flex-col gap-2">
-        {column.taskIds.map((id) => (
-          <TaskCard key={id} task={tasks[id]} />
+      {/* Масові дії */}
+      {someSelected && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          <button
+            onClick={bulkDelete}
+            className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+          >
+            🗑️ Видалити
+          </button>
+          <button
+            onClick={() => bulkToggleComplete(true)}
+            className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded"
+          >
+            ✅ Виконано
+          </button>
+          <button
+            onClick={() => bulkToggleComplete(false)}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded"
+          >
+            🔁 Не виконано
+          </button>
+        </div>
+      )}
+
+      {/* Завдання */}
+      <div className="flex flex-col gap-2">
+        {taskList.map((task) => (
+          <TaskCard key={task.id} task={task} />
         ))}
       </div>
     </div>
