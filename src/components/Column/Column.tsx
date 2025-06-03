@@ -23,7 +23,7 @@ export function Column({ column }: Props) {
     bulkToggleComplete,
     moveTaskToColumn,
     reorderTaskInColumn,
-    reorderColumns, // <- обовʼязково додай у useTasks, якщо ще не додано
+    reorderColumns,
     searchTerm,
     statusFilter,
   } = useTasks()
@@ -43,7 +43,6 @@ export function Column({ column }: Props) {
       onDrop: ({ source }) => {
         const taskId = source.data.taskId as string
 
-        // Task drag
         const fromColumn = columns.find((col) => col.taskIds.includes(taskId))
         if (fromColumn) {
           const dropIndex = calculateDropIndex(ref.current!, taskId)
@@ -63,7 +62,6 @@ export function Column({ column }: Props) {
           return
         }
 
-        // Column drag
         const sourceColumnId = source.data.columnId as string
         if (
           sourceColumnId &&
