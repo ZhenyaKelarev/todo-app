@@ -1,17 +1,21 @@
 import { useTasks } from "@/hooks/useTasks"
 import { Task } from "@/types"
 import clsx from "clsx"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 
 interface Props {
   task: Task
+  columnId: string
 }
 
-export function TaskCard({ task }: { task: Task }) {
+export function TaskCard({ task, columnId }: Props) {
   const { toggleComplete, removeTask, editTask, selectTask } = useTasks()
 
   const [editing, setEditing] = useState(false)
   const [tempTitle, setTempTitle] = useState(task.title)
+
+  const ref = useRef<HTMLDivElement | null>(null)
 
   const handleEdit = () => {
     if (editing && tempTitle.trim() !== "") {
@@ -20,8 +24,22 @@ export function TaskCard({ task }: { task: Task }) {
     setEditing(!editing)
   }
 
+  useEffect(() => {
+    if (!ref.current) return
+
+    return draggable({
+      element: ref.current,
+      getInitialData: () => ({
+        type: "task",
+        taskId: task.id,
+      }),
+    })
+  }, [])
+
   return (
     <div
+      ref={ref}
+      data-task-id={task.id}
       className={clsx(
         "border rounded p-2 flex items-center justify-between gap-2",
         task.completed ? "bg-green-100 line-through text-gray-500" : "bg-white",

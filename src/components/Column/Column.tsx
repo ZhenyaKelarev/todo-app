@@ -1,7 +1,10 @@
-import React, { useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { useTasks } from "@/hooks/useTasks"
 import { TaskCard } from "../Task/Task"
 import { Column as ColumnType } from "@/types"
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+import clsx from "clsx"
+import { calculateDropIndex } from "@/utils/calculateDropIndex"
 
 interface Props {
   column: ColumnType
@@ -10,15 +13,48 @@ interface Props {
 export function Column({ column }: Props) {
   const {
     tasks,
+    columns,
     addTask,
     selectAllInColumn,
     bulkDelete,
     bulkToggleComplete,
+    moveTaskToColumn,
+    reorderTaskInColumn,
     searchTerm,
     statusFilter,
   } = useTasks()
 
   const [newTaskTitle, setNewTaskTitle] = useState("")
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const ref = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!ref.current) return
+
+    return dropTargetForElements({
+      element: ref.current,
+      getData: () => ({ type: "column", columnId: column.id }),
+      onDragEnter() {},
+      onDrop: ({ source, location }) => {
+        const taskId = source.data.taskId as string
+        const fromColumn = columns.find((col) => col.taskIds.includes(taskId))
+        if (!fromColumn) return
+
+        const dropIndex = calculateDropIndex(ref.current!, taskId)
+
+        if (fromColumn.id !== column.id) {
+          // Переміщення у іншу колонку з визначеним порядком
+          moveTaskToColumn(taskId, column.id, dropIndex)
+        } else {
+          // Пересортування у межах колонки
+          const fromIndex = fromColumn.taskIds.indexOf(taskId)
+          if (fromIndex !== -1 && dropIndex !== -1 && fromIndex !== dropIndex) {
+            reorderTaskInColumn(column.id, fromIndex, dropIndex)
+          }
+        }
+      },
+    })
+  }, [ref.current, columns])
 
   const taskList = column.taskIds
     .map((id) => tasks[id])
@@ -49,8 +85,13 @@ export function Column({ column }: Props) {
   }
 
   return (
-    <div className="min-w-[250px] border rounded p-4 bg-gray-100 flex flex-col gap-3">
-      {/* Заголовок + Select All */}
+    <div
+      ref={ref}
+      className={clsx(
+        "min-w-[250px] border rounded p-4 flex flex-col gap-3 transition",
+        isDraggingOver ? "bg-blue-100" : "bg-gray-100"
+      )}
+    >
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-lg">{column.title}</h2>
         <label className="flex items-center gap-1 text-sm">
@@ -63,7 +104,6 @@ export function Column({ column }: Props) {
         </label>
       </div>
 
-      {/* Інпут додавання нового завдання */}
       <div className="flex gap-2">
         <input
           type="text"
@@ -81,7 +121,6 @@ export function Column({ column }: Props) {
         </button>
       </div>
 
-      {/* Масові дії */}
       {someSelected && (
         <div className="flex flex-wrap gap-2 text-xs">
           <button
@@ -105,10 +144,9 @@ export function Column({ column }: Props) {
         </div>
       )}
 
-      {/* Завдання */}
       <div className="flex flex-col gap-2">
         {taskList.map((task) => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard columnId={column.id} key={task.id} task={task} />
         ))}
       </div>
     </div>

@@ -22,6 +22,16 @@ interface TaskState {
   selectAllInColumn: (columnId: string, selected: boolean) => void
   bulkDelete: () => void
   bulkToggleComplete: (complete: boolean) => void
+  moveTaskToColumn: (
+    taskId: string,
+    toColumnId: string,
+    toIndex: number
+  ) => void
+  reorderTaskInColumn: (
+    columnId: string,
+    fromIndex: number,
+    toIndex: number
+  ) => void
 }
 
 export const useTasks = create<TaskState>()(
@@ -181,6 +191,59 @@ export const useTasks = create<TaskState>()(
             }
           }
           return { tasks: updated }
+        }),
+
+      moveTaskToColumn: (taskId: string, toColumnId: string, toIndex: number) =>
+        set((state) => {
+          // Знаходимо колонку, з якої забираємо таску
+          const fromColumn = state.columns.find((col) =>
+            col.taskIds.includes(taskId)
+          )
+          if (!fromColumn) return {}
+
+          // Видаляємо таску з колонки джерела
+          const newFromTaskIds = fromColumn.taskIds.filter(
+            (id) => id !== taskId
+          )
+
+          // Вставляємо таску у колонку призначення на потрібну позицію
+          const toColumn = state.columns.find((col) => col.id === toColumnId)
+          if (!toColumn) return {}
+
+          const newToTaskIds = [...toColumn.taskIds]
+          newToTaskIds.splice(toIndex, 0, taskId)
+
+          return {
+            columns: state.columns.map((col) => {
+              if (col.id === fromColumn.id) {
+                return { ...col, taskIds: newFromTaskIds }
+              }
+              if (col.id === toColumnId) {
+                return { ...col, taskIds: newToTaskIds }
+              }
+              return col
+            }),
+          }
+        }),
+
+      reorderTaskInColumn: (
+        columnId: string,
+        fromIndex: number,
+        toIndex: number
+      ) =>
+        set((state) => {
+          const column = state.columns.find((col) => col.id === columnId)
+          if (!column) return {}
+
+          const taskIds = [...column.taskIds]
+          const [moved] = taskIds.splice(fromIndex, 1)
+          taskIds.splice(toIndex, 0, moved)
+
+          return {
+            columns: state.columns.map((col) =>
+              col.id === columnId ? { ...col, taskIds } : col
+            ),
+          }
         }),
     }),
     {
