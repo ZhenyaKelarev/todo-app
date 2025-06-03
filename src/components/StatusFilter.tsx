@@ -4,7 +4,7 @@ export const StatusFilter = () => {
   const { statusFilter, setStatusFilter } = useTasks()
 
   return (
-    <div className="flex gap-2 text-sm">
+    <div className="flex gap-2 py-4 text-sm">
       <button
         className={`px-2 py-1 rounded ${
           statusFilter === "all" ? "bg-blue-600 text-white" : "bg-gray-200"

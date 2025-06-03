@@ -29,7 +29,7 @@ export function Board() {
   }, [columns])
 
   return (
-    <div className="p-4">
+    <div>
       <AddColumn />
       <div className="flex gap-4 overflow-x-auto">
         {columns.map((col) => (

@@ -129,14 +129,16 @@ export function Column({ column }: Props) {
     >
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-lg">{column.title}</h2>
-        <label className="flex items-center gap-1 text-sm">
-          <input
-            type="checkbox"
-            checked={allSelected}
-            onChange={(e) => selectAllInColumn(column.id, e.target.checked)}
-          />
-          Вибрати всі
-        </label>
+        {taskList.length > 0 && (
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={(e) => selectAllInColumn(column.id, e.target.checked)}
+            />
+            Вибрати всі
+          </label>
+        )}
       </div>
 
       <div className="flex gap-2">
