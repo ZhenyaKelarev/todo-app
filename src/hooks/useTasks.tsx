@@ -32,6 +32,7 @@ interface TaskState {
     fromIndex: number,
     toIndex: number
   ) => void
+  reorderColumns: (fromIndex: number, toIndex: number) => void
 }
 
 export const useTasks = create<TaskState>()(
@@ -244,6 +245,13 @@ export const useTasks = create<TaskState>()(
               col.id === columnId ? { ...col, taskIds } : col
             ),
           }
+        }),
+      reorderColumns: (fromIndex: number, toIndex: number) =>
+        set((state) => {
+          const updated = [...state.columns]
+          const [moved] = updated.splice(fromIndex, 1)
+          updated.splice(toIndex, 0, moved)
+          return { columns: updated }
         }),
     }),
     {

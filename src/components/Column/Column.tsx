@@ -2,7 +2,10 @@ import React, { useEffect, useRef, useState } from "react"
 import { useTasks } from "@/hooks/useTasks"
 import { TaskCard } from "../Task/Task"
 import { Column as ColumnType } from "@/types"
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+import {
+  dropTargetForElements,
+  draggable,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import clsx from "clsx"
 import { calculateDropIndex } from "@/utils/calculateDropIndex"
 
@@ -20,6 +23,7 @@ export function Column({ column }: Props) {
     bulkToggleComplete,
     moveTaskToColumn,
     reorderTaskInColumn,
+    reorderColumns, // <- обовʼязково додай у useTasks, якщо ще не додано
     searchTerm,
     statusFilter,
   } = useTasks()
@@ -31,29 +35,62 @@ export function Column({ column }: Props) {
   useEffect(() => {
     if (!ref.current) return
 
-    return dropTargetForElements({
+    const cleanupDrop = dropTargetForElements({
       element: ref.current,
       getData: () => ({ type: "column", columnId: column.id }),
-      onDragEnter() {},
-      onDrop: ({ source, location }) => {
+      onDragEnter: () => setIsDraggingOver(true),
+      onDragLeave: () => setIsDraggingOver(false),
+      onDrop: ({ source }) => {
         const taskId = source.data.taskId as string
+
+        // Task drag
         const fromColumn = columns.find((col) => col.taskIds.includes(taskId))
-        if (!fromColumn) return
+        if (fromColumn) {
+          const dropIndex = calculateDropIndex(ref.current!, taskId)
 
-        const dropIndex = calculateDropIndex(ref.current!, taskId)
+          if (fromColumn.id !== column.id) {
+            moveTaskToColumn(taskId, column.id, dropIndex)
+          } else {
+            const fromIndex = fromColumn.taskIds.indexOf(taskId)
+            if (
+              fromIndex !== -1 &&
+              dropIndex !== -1 &&
+              fromIndex !== dropIndex
+            ) {
+              reorderTaskInColumn(column.id, fromIndex, dropIndex)
+            }
+          }
+          return
+        }
 
-        if (fromColumn.id !== column.id) {
-          // Переміщення у іншу колонку з визначеним порядком
-          moveTaskToColumn(taskId, column.id, dropIndex)
-        } else {
-          // Пересортування у межах колонки
-          const fromIndex = fromColumn.taskIds.indexOf(taskId)
-          if (fromIndex !== -1 && dropIndex !== -1 && fromIndex !== dropIndex) {
-            reorderTaskInColumn(column.id, fromIndex, dropIndex)
+        // Column drag
+        const sourceColumnId = source.data.columnId as string
+        if (
+          sourceColumnId &&
+          sourceColumnId !== column.id &&
+          columns.some((col) => col.id === sourceColumnId)
+        ) {
+          const fromIndex = columns.findIndex((c) => c.id === sourceColumnId)
+          const toIndex = columns.findIndex((c) => c.id === column.id)
+          if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+            reorderColumns(fromIndex, toIndex)
           }
         }
       },
     })
+
+    const cleanupDraggable = draggable({
+      element: ref.current,
+      getInitialData: () => ({
+        type: "column",
+        columnId: column.id,
+      }),
+    })
+
+    return () => {
+      cleanupDrop()
+      cleanupDraggable()
+    }
   }, [ref.current, columns])
 
   const taskList = column.taskIds
