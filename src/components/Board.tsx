@@ -16,10 +16,10 @@ export function Board() {
       element: ref.current,
       canDrop: ({ source }) => source.data?.type === "column",
       getData: () => ({ type: "column-drop-target" }),
-      onDrop: ({ source, location }) => {
+      onDrop: ({ source }) => {
         const sourceId = source.data.columnId as string
         const fromIndex = columns.findIndex((col) => col.id === sourceId)
-        const toIndex = calculateDropIndex(ref.current!, sourceId)
+        const toIndex = calculateDropIndex(ref.current!)
 
         if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
           reorderColumns(fromIndex, toIndex)

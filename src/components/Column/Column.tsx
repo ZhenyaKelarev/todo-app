@@ -45,7 +45,7 @@ export function Column({ column }: Props) {
 
         const fromColumn = columns.find((col) => col.taskIds.includes(taskId))
         if (fromColumn) {
-          const dropIndex = calculateDropIndex(ref.current!, taskId)
+          const dropIndex = calculateDropIndex(ref.current!)
 
           if (fromColumn.id !== column.id) {
             moveTaskToColumn(taskId, column.id, dropIndex)

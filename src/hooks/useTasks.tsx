@@ -37,7 +37,7 @@ interface TaskState {
 
 export const useTasks = create<TaskState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       tasks: {},
       columns: [
         {

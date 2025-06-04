@@ -9,7 +9,7 @@ interface Props {
   columnId: string
 }
 
-export function TaskCard({ task, columnId }: Props) {
+export function TaskCard({ task }: Props) {
   const { toggleComplete, removeTask, editTask, selectTask } = useTasks()
 
   const [editing, setEditing] = useState(false)

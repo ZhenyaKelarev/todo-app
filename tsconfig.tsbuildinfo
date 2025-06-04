@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/addcolumn.tsx","./src/components/board.tsx","./src/components/statusfilter.tsx","./src/components/column/column.tsx","./src/components/task/task.tsx","./src/hooks/usetasks.tsx","./src/types/index.ts","./src/utils/calculatedropindex.ts"],"errors":true,"version":"5.8.3"}

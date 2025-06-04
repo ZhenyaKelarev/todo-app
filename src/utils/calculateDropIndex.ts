@@ -1,6 +1,6 @@
 export function calculateDropIndex(
-  dropContainer: HTMLElement,
-  draggedTaskId: string
+  dropContainer: HTMLElement
+  // draggedTaskId: string
 ): number {
   const taskElements = Array.from(
     dropContainer.querySelectorAll("[data-task-id]")
